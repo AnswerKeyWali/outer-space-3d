@@ -1,20 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>3D Solar System</title>
-    <link rel="stylesheet" href="style.css" />
-  </head>
-  <body>
-    <canvas id="space"></canvas>
-    <div class="overlay">
-      <h1>☀️ 3D Solar System</h1>
-      <p>Made by Mahesh Meena</p>
-    </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Solar System</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: black; }
+    #overlay {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-shadow: 0 0 10px cyan;
+      pointer-events: none;
+    }
+    h1 { font-size: 2.5em; margin: 0; }
+    p { margin-top: 10px; font-size: 1em; color: #ccc; }
+  </style>
+</head>
+<body>
+  <canvas id="space"></canvas>
 
-    <script src="https://cdn.jsdelivr.net/npm/three@0.164.0/build/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.164.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="script.js"></script>
-  </body>
+  <div id="overlay">
+    <h1>☀️ 3D Solar System</h1>
+    <p>Made by Mahesh Meena</p>
+  </div>
+
+  <!-- ✅ Load Three.js and OrbitControls first -->
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+
+  <!-- ✅ Your script -->
+  <script src="script.js"></script>
+</body>
 </html>
