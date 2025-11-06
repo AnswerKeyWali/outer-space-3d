@@ -1,138 +1,95 @@
-// === SETUP ===
+// === 3D Solar System by Mahesh Meena ===
+
+// Scene, Camera, Renderer setup
 const scene = new THREE.Scene();
-const camera = new THREE.PerspectiveCamera(
-  60,
-  window.innerWidth / window.innerHeight,
-  0.1,
-  1000
-);
+const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
 const renderer = new THREE.WebGLRenderer({ canvas: document.querySelector("#space") });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 
-// === LIGHT ===
-const pointLight = new THREE.PointLight(0xffffff, 2, 1000);
-scene.add(pointLight);
+// Lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+const pointLight = new THREE.PointLight(0xffffff, 2);
+scene.add(ambientLight, pointLight);
 
-// === TEXTURE LOADER ===
+// Texture loader
 const loader = new THREE.TextureLoader();
+const base = "https://threejsfundamentals.org/threejs/resources/images/";
 
-// === SUN ===
-const sunTex = loader.load("https://threejsfundamentals.org/threejs/resources/images/sun.jpg");
+// Create Sun
 const sun = new THREE.Mesh(
   new THREE.SphereGeometry(10, 64, 64),
-  new THREE.MeshBasicMaterial({ map: sunTex })
+  new THREE.MeshBasicMaterial({ map: loader.load(base + "sun.jpg") })
 );
 scene.add(sun);
 
-// === PLANET FACTORY ===
-function createPlanet(size, texture, distance) {
-  const geo = new THREE.SphereGeometry(size, 32, 32);
-  const mat = new THREE.MeshStandardMaterial({ map: loader.load(texture) });
-  const mesh = new THREE.Mesh(geo, mat);
+// Planet data: [size, distance from sun, texture, orbit speed]
+const planetsData = [
+  [1, 16, "mercury.jpg", 0.02],
+  [1.5, 22, "venus.jpg", 0.015],
+  [2, 30, "earth-day.jpg", 0.01],
+  [1.8, 38, "mars_1k_color.jpg", 0.008],
+  [4, 52, "jupiter.jpg", 0.006],
+  [3.5, 68, "saturn.jpg", 0.005],
+  [3, 80, "uranus.jpg", 0.004],
+  [2.5, 92, "neptune.jpg", 0.003]
+];
 
-  const obj = new THREE.Object3D(); // orbit pivot
-  obj.add(mesh);
-  mesh.position.x = distance;
-  scene.add(obj);
-  return { mesh, obj };
+const planets = [];
+
+// Create planets
+for (let [size, dist, tex, speed] of planetsData) {
+  const planet = new THREE.Mesh(
+    new THREE.SphereGeometry(size, 64, 64),
+    new THREE.MeshStandardMaterial({ map: loader.load(base + tex) })
+  );
+  planet.userData = { distance: dist, speed, angle: Math.random() * Math.PI * 2 };
+  scene.add(planet);
+  planets.push(planet);
 }
 
-// === PLANETS ===
-const mercury = createPlanet(1, "https://threejsfundamentals.org/threejs/resources/images/mercury.jpg", 15);
-const venus = createPlanet(1.5, "https://threejsfundamentals.org/threejs/resources/images/venus.jpg", 20);
-const earth = createPlanet(2, "https://threejsfundamentals.org/threejs/resources/images/earth-day.jpg", 25);
-const mars = createPlanet(1.6, "https://threejsfundamentals.org/threejs/resources/images/mars_1k_color.jpg", 32);
-const jupiter = createPlanet(4, "https://threejsfundamentals.org/threejs/resources/images/jupiter.jpg", 45);
-const saturn = createPlanet(3.5, "https://threejsfundamentals.org/threejs/resources/images/saturn.jpg", 60);
-const uranus = createPlanet(2.5, "https://threejsfundamentals.org/threejs/resources/images/uranus.jpg", 75);
-const neptune = createPlanet(2.5, "https://threejsfundamentals.org/threejs/resources/images/neptune.jpg", 90);
-
-// === SATURN RINGS ===
-const ringGeo = new THREE.RingGeometry(4.5, 6, 64);
-const ringMat = new THREE.MeshBasicMaterial({
-  map: loader.load("https://threejsfundamentals.org/threejs/resources/images/saturnring.png"),
-  side: THREE.DoubleSide,
-  transparent: true,
-});
-const ring = new THREE.Mesh(ringGeo, ringMat);
-ring.rotation.x = Math.PI / 2;
-saturn.mesh.add(ring);
-
-// === MOON around EARTH ===
-const moonTex = loader.load("https://threejsfundamentals.org/threejs/resources/images/moon.jpg");
-const moon = new THREE.Mesh(
-  new THREE.SphereGeometry(0.5, 32, 32),
-  new THREE.MeshStandardMaterial({ map: moonTex })
-);
-const moonObj = new THREE.Object3D();
-moonObj.add(moon);
-moon.position.x = 3;
-earth.mesh.add(moonObj);
-
-// === SATELLITE (small cube) ===
-const satGeo = new THREE.BoxGeometry(0.3, 0.3, 0.3);
-const satMat = new THREE.MeshStandardMaterial({ color: 0x00ffff });
-const satellite = new THREE.Mesh(satGeo, satMat);
-const satOrbit = new THREE.Object3D();
-satOrbit.add(satellite);
-satellite.position.x = 4;
-earth.mesh.add(satOrbit);
-
-// === STARFIELD ===
-const starGeo = new THREE.BufferGeometry();
-const starCount = 2000;
+// Stars background
+const starsGeometry = new THREE.BufferGeometry();
+const starCount = 1000;
 const starPositions = new Float32Array(starCount * 3);
 for (let i = 0; i < starCount * 3; i++) {
   starPositions[i] = (Math.random() - 0.5) * 2000;
 }
-starGeo.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
-const starMat = new THREE.PointsMaterial({ color: 0xffffff });
-const stars = new THREE.Points(starGeo, starMat);
-scene.add(stars);
+starsGeometry.setAttribute("position", new THREE.BufferAttribute(starPositions, 3));
+const starsMaterial = new THREE.PointsMaterial({ color: 0xffffff });
+scene.add(new THREE.Points(starsGeometry, starsMaterial));
 
-// === CONTROLS ===
+// Camera setup
+camera.position.set(0, 40, 120);
+camera.lookAt(scene.position);
+
+// Controls
 const controls = new THREE.OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
-camera.position.set(0, 40, 120);
+controls.dampingFactor = 0.05;
 
-// === RESIZE ===
+// Handle window resize
 window.addEventListener("resize", () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
-// === ANIMATION ===
+// Animation loop
 function animate() {
   requestAnimationFrame(animate);
 
-  // rotate Sun
-  sun.rotation.y += 0.001;
+  sun.rotation.y += 0.002;
 
-  // orbit speeds (in radians)
-  mercury.obj.rotation.y += 0.015;
-  venus.obj.rotation.y += 0.012;
-  earth.obj.rotation.y += 0.01;
-  mars.obj.rotation.y += 0.008;
-  jupiter.obj.rotation.y += 0.006;
-  saturn.obj.rotation.y += 0.005;
-  uranus.obj.rotation.y += 0.004;
-  neptune.obj.rotation.y += 0.003;
-
-  // self rotations
-  earth.mesh.rotation.y += 0.02;
-  mars.mesh.rotation.y += 0.018;
-  jupiter.mesh.rotation.y += 0.015;
-  saturn.mesh.rotation.y += 0.015;
-  uranus.mesh.rotation.y += 0.012;
-  neptune.mesh.rotation.y += 0.012;
-
-  // moon + satellite orbit
-  moonObj.rotation.y += 0.03;
-  satOrbit.rotation.y += 0.04;
+  for (let planet of planets) {
+    planet.userData.angle += planet.userData.speed;
+    planet.position.x = planet.userData.distance * Math.cos(planet.userData.angle);
+    planet.position.z = planet.userData.distance * Math.sin(planet.userData.angle);
+    planet.rotation.y += 0.01;
+  }
 
   controls.update();
   renderer.render(scene, camera);
 }
+
 animate();
